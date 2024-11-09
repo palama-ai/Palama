@@ -157,7 +157,7 @@ def process_command():
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return send_from_directory('', 'index.html')
 
 if __name__ == "__main__":
     #ngrok.set_auth_token('2durkD6CSWHQoTrHuV6JpZYREH0_7ZkGwTuhgWWdj6BNZHKUp')
