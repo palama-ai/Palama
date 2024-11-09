@@ -11,3 +11,8 @@ speechrecognition
 flask_cors
 opencv-python
 pillow
+requests
+beautifulsoup4
+schedule
+spacy
+pyngrok
