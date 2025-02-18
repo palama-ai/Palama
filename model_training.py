@@ -122,11 +122,6 @@ def job():
     # إضافة الروابط التي تريد جمع البيانات منها
     urls = [
         "https://www.bing.com",
-        "https://google.com",
-        "https://facebook.com",
-        "https://instagram.com",
-        "https://snapchat.com",
-        "https://github.com",
     ]
     all_questions = []
     all_answers = []
