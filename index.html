@@ -1,0 +1,3411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Palama AI Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #2563eb;
+            --primary-purple: #8b5cf6;
+            --gradient-start: #3a7bd5;
+            --gradient-end: #9359e3;
+            --background: #1a1a1a;
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --text-primary: rgba(255, 255, 255, 0.9);
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --input-bg: rgba(255, 255, 255, 0.07);
+            --glow-color: rgba(123, 81, 219, 0.5);
+            --theme-toggle-bg: rgba(255, 255, 255, 0.2);
+            --theme-toggle-knob: #ffffff;
+            --theme-icon-color: rgba(255, 255, 255, 0.9);
+        }
+        
+        :root[data-theme="light"] {
+            --background: #ffffff;
+            --text-primary: rgba(0, 0, 0, 0.9);
+            --text-secondary: rgba(0, 0, 0, 0.7);
+            --primary-blue: #0066cc;
+            --blur-color: rgba(0, 102, 204, 0.1);
+            --theme-toggle-bg: rgba(0, 0, 0, 0.2);
+            --theme-toggle-knob: #ffffff;
+            --theme-icon-color: rgba(0, 0, 0, 0.9);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+            min-height: 100vh;
+            /* Mobile viewport bug fix */
+            min-height: -webkit-fill-available;
+        }
+        
+        html {
+            height: -webkit-fill-available;
+        }
+        
+        .container {
+            width: 800px;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            padding: 40px;
+            min-height: 100vh;
+            /* Mobile viewport bug fix */
+            min-height: calc(var(--vh, 1vh) * 100);
+        }
+        
+        /* Background blur elements */
+        .blur-circle {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.2;
+            z-index: -1;
+        }
+        
+        .blur-circle-1 {
+            width: 400px;
+            height: 400px;
+            background: var(--primary-blue);
+            top: -100px;
+            left: -100px;
+        }
+        
+        .blur-circle-2 {
+            width: 350px;
+            height: 350px;
+            background: var(--primary-purple);
+            bottom: -50px;
+            right: -50px;
+        }
+        
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            animation: fadeIn 1s ease;
+        }
+
+        .main-title {
+            font-size: 24px;
+            font-weight: 500;
+            margin-bottom: 30px;
+            opacity: 0.8;
+            animation: fadeIn 1.2s ease;
+        }
+        
+        .search-container {
+            width: 100%;
+            max-width: 600px;
+            position: relative;
+            margin-bottom: 25px;
+        }
+        
+        .search-input-wrapper {
+            width: 100%;
+            background: white;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            position: relative;
+            transition: all 0.3s ease;
+            animation: fadeIn 1.4s ease;
+            display: flex;
+        }
+        
+        .search-input-wrapper:focus-within {
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+            border-color: rgba(37, 99, 235, 0.3);
+        }
+        
+        .search-input {
+            width: 100%;
+            height: 48px;
+            background: transparent;
+            border: none;
+            padding: 12px 50px 12px 60px;
+            font-size: 16px;
+            color: #111;
+            transition: all 0.2s ease;
+        }
+        
+        .search-input:focus {
+            outline: none;
+        }
+        
+        .input-controls {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 2;
+        }
+        
+        .plus-button {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background: transparent;
+            color: rgba(0, 0, 0, 0.6);
+            font-size: 14px;
+            transition: all 0.2s ease;
+            padding: 0;
+        }
+        
+        .plus-button:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        
+        .mic-button {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary-blue);
+            border: none;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 2;
+            padding: 0;
+        }
+        
+        .mic-button:hover {
+            background: var(--primary-purple);
+        }
+        
+        .mic-button.recording {
+            background: #f44336;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .search-input-wrapper.recording {
+            background: rgba(244, 67, 54, 0.1);
+            border: 1px solid rgba(244, 67, 54, 0.3);
+        }
+        
+        .search-input.recording {
+            background: transparent;
+            text-align: center;
+            font-weight: 500;
+            color: #f44336;
+        }
+        
+        .recording-wave {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            height: 30px;
+            width: 60%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .recording-wave.active {
+            display: flex;
+        }
+        
+        .recording-wave span {
+            display: block;
+            width: 4px;
+            margin: 0 2px;
+            height: 5px;
+            background: var(--primary-blue);
+            border-radius: 3px;
+            transition: height 0.1s ease;
+        }
+        
+        .send-button {
+            display: none;
+        }
+        
+        .bottom-buttons {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 8px;
+            padding-left: 5px;
+            animation: fadeIn 1.6s ease;
+        }
+        
+        .bottom-button {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            color: #000;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+        
+        .bottom-button i {
+            color: var(--primary-blue);
+        }
+        
+        .bottom-button:hover {
+            background: rgba(255, 255, 255, 1);
+            color: #000;
+            border-color: rgba(0, 0, 0, 0.2);
+        }
+        
+        .bottom-button.active {
+            background: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+        }
+        
+        .bottom-button.active i {
+            color: white;
+        }
+        
+        .thinking-container {
+            display: none;
+            margin: 10px 0;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            font-size: 14px;
+            color: #000;
+            font-weight: 500;
+            max-height: 200px;
+            overflow-y: auto;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .thinking-container.active {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .thinking-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            color: #000;
+        }
+        
+        .thinking-steps {
+            margin-top: 10px;
+            color: rgba(0, 0, 0, 0.8);
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            padding-left: 34px;
+        }
+        
+        .thinking-steps.expanded {
+            max-height: 500px;
+            display: block;
+        }
+        
+        .thinking-step {
+            margin-bottom: 8px;
+            padding-left: 8px;
+            border-left: 2px solid rgba(9, 158, 255, 0.3);
+        }
+        
+        .rotate-animation {
+            animation: rotate 2s linear infinite;
+        }
+        
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 8px;
+            padding-left: 5px;
+            animation: fadeIn 1.6s ease;
+        }
+        
+        .action-button {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: white;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 14px;
+            color: rgba(0, 0, 0, 0.8);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+        }
+        
+        .action-button:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+        }
+        
+        .action-button i {
+            color: var(--primary-blue);
+            font-size: 14px;
+        }
+        
+        .glassmorphic-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Plus button popup styles */
+        .popup-menu {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            min-width: 200px;
+            z-index: 9999;
+            display: none;
+        }
+        
+        .popup-menu.show {
+            display: block;
+        }
+        
+        .popup-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            color: var(--text-primary);
+            font-size: 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .popup-option:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        
+        .popup-option i {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-blue);
+        }
+        
+        /* More menu styles */
+        .more-menu {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            min-width: 200px;
+            z-index: 9999;
+            display: none;
+        }
+        
+        .more-menu.show {
+            display: block;
+        }
+        
+        .more-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            color: var(--text-primary);
+            font-size: 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .more-option:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        
+        .more-option i {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-blue);
+        }
+        
+        /* Sub-options menu styles */
+        .sub-options {
+            display: none;
+            margin-top: 10px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            width: 100%;
+        }
+        
+        .sub-options.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .sub-option {
+            padding: 8px 15px;
+            margin: 5px 0;
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .sub-option:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        
+        /* File upload styles */
+        .file-input {
+            display: none;
+        }
+        
+        .upload-feedback {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .upload-feedback.show {
+            opacity: 1;
+        }
+        
+        .upload-feedback i.success {
+            color: #10b981;
+        }
+        
+        .upload-feedback i.error {
+            color: #ef4444;
+        }
+        
+        .upload-feedback i.warning {
+            color: #f59e0b;
+        }
+        
+        /* Chat styles */
+        .chat-container {
+            display: none;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto 20px;
+            overflow-y: auto;
+            max-height: 400px;
+            padding: 20px;
+        }
+        
+        .chat-container.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .message {
+            display: flex;
+            margin-bottom: 20px;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .message.user {
+            justify-content: flex-end;
+        }
+        
+        .message.ai {
+            background: var(--dark-glass);
+            text-align: left;
+            margin-right: 20%;
+            align-self: flex-start;
+            border-radius: 16px 16px 16px 0;
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .ai-logo {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        
+        .typing-effect {
+            display: inline-block;
+            white-space: pre-wrap;
+            overflow: hidden;
+            width: 100%;
+        }
+        
+        .typing-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 16px;
+            background: var(--primary-blue);
+            margin-left: 2px;
+            animation: blink 1s infinite;
+        }
+        
+        .message-content {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .message.user .message-content {
+            background: var(--primary-blue);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .message.ai .message-content {
+            background: #f0f0f0;
+            color: var(--text-primary);
+            border-bottom-left-radius: 4px;
+        }
+        
+        .input-active-mode {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 600px;
+            z-index: 100;
+            background: var(--background);
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            animation: slideUp 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .input-active-mode .bottom-buttons {
+            margin-top: 5px;
+            justify-content: center;
+        }
+        
+        .actions.hidden {
+            display: none;
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translate(-50%, 50px);
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(244, 67, 54, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
+            }
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        @keyframes slideRightToLeft {
+            0% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            20% {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                width: 100%;
+                max-width: 100%;
+                min-height: 100vh;
+                padding: 15px;
+            }
+            
+            .logo {
+                font-size: 24px;
+            }
+            
+            .main-title {
+                font-size: 22px;
+                padding: 0 15px;
+                text-align: center;
+            }
+            
+            .search-container {
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            .search-input {
+                font-size: 14px;
+                padding: 10px 50px 10px 15px;
+                width: 100%;
+            }
+            
+            .actions {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 10px;
+            }
+            
+            .action-button {
+                font-size: 14px;
+                padding: 8px 12px;
+                margin-bottom: 8px;
+                min-width: 130px;
+            }
+            
+            .chat-container {
+                padding: 12px;
+                max-height: 70vh;
+            }
+            
+            .message {
+                max-width: 90%;
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+            
+            .message.user {
+                margin-left: auto;
+                margin-right: 5px;
+            }
+            
+            .message.bot {
+                margin-right: auto;
+                margin-left: 5px;
+            }
+            
+            .plus-menu, .more-menu {
+                width: 240px;
+                right: 10px;
+            }
+            
+            .thinking-container, .searching-container {
+                width: 90%;
+                max-width: none;
+            }
+            
+            .stop-generation-btn {
+                width: 36px;
+                height: 36px;
+            }
+            
+            /* Make search container sticky at bottom when in chat mode */
+            .search-container.input-active-mode {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                padding: 10px;
+                background-color: var(--background);
+                box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+                z-index: 100;
+            }
+            
+            /* Adjust chat container when search is fixed */
+            .chat-container.active {
+                padding-bottom: 70px;
+                margin-bottom: 10px;
+            }
+            
+            /* Make text and code wrapping better on small screens */
+            .message .code {
+                max-width: 100%;
+                overflow-x: auto;
+                white-space: pre-wrap;
+                word-break: break-word;
+            }
+            
+            /* Improve tap targets */
+            .mic-button, .plus-button, .settings-button, .history-button {
+                padding: 8px;
+                width: 36px;
+                height: 36px;
+            }
+        }
+        
+        /* Small phones */
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .action-button {
+                min-width: 110px;
+                font-size: 13px;
+                padding: 8px 10px;
+            }
+            
+            .message {
+                max-width: 95%;
+                font-size: 13px;
+            }
+            
+            .settings-modal .settings-content {
+                width: 90%;
+                padding: 15px;
+            }
+            
+            .chat-history-container {
+                width: 90%;
+            }
+        }
+        
+        /* Theme switcher styles */
+        .theme-switcher {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .theme-toggle {
+            width: 52px;
+            height: 28px;
+            background: var(--theme-toggle-bg);
+            border-radius: 14px;
+            padding: 3px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .theme-toggle::before {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--theme-toggle-knob);
+            left: 3px;
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .theme-toggle.light::before {
+            transform: translateX(24px);
+        }
+
+        .theme-icon {
+            color: var(--text-secondary);
+            font-size: 14px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease, color 0.3s ease;
+        }
+
+        .theme-toggle:hover::before {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .theme-icon.fa-sun {
+            color: #ffd700;
+        }
+
+        .theme-icon.fa-moon {
+            color: #99ccff;
+        }
+        
+        /* Settings Button */
+        .settings-button-container {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background-color: var(--card-background);
+            height: 40px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            font-size: 14px;
+        }
+        
+        .settings-button-container i {
+            font-size: 16px;
+            color: var(--text-primary);
+            margin-right: 6px;
+        }
+        
+        .settings-button-container span {
+            color: var(--text-primary);
+        }
+        
+        .settings-button-container:hover {
+            background-color: var(--card-background-hover);
+        }
+        
+        /* AI Model switcher styles */
+        .model-switcher {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 15px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .model-switcher-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: var(--text-primary);
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .model-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease;
+            opacity: 0;
+            margin-top: 0;
+        }
+        
+        .model-switcher.expanded .model-options {
+            max-height: 300px;
+            opacity: 1;
+            margin-top: 10px;
+        }
+        
+        .model-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-secondary);
+        }
+        
+        .model-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+        
+        .model-option.active {
+            background: var(--primary-blue);
+            color: white;
+        }
+        
+        .model-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .model-name {
+            font-size: 14px;
+        }
+        
+        /* Notification styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            background-color: rgba(20, 170, 92, 0.9);
+            color: white;
+            border-radius: 8px;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1100;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+        }
+        
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .notification-error {
+            background-color: rgba(220, 53, 69, 0.9);
+        }
+        
+        /* Chat history styles */
+        .chat-history-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            padding: 10px 15px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-primary);
+        }
+        
+        .chat-history-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .chat-history-container {
+            position: fixed;
+            top: 70px;
+            left: 20px;
+            z-index: 1000;
+            width: 300px;
+            max-height: 0;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        .chat-history-container.visible {
+            max-height: 400px;
+            opacity: 1;
+            visibility: visible;
+            padding: 15px;
+        }
+        
+        .chat-history-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+            font-weight: bold;
+        }
+        
+        .chat-history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 320px;
+            overflow-y: auto;
+        }
+        
+        .chat-history-item {
+            padding: 12px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-secondary);
+            position: relative;
+        }
+        
+        .chat-history-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+        
+        .chat-history-item .icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--primary-blue);
+            border-radius: 50%;
+            color: white;
+        }
+        
+        .chat-history-item .title {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 14px;
+        }
+        
+        .chat-history-item .date {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+        
+        .chat-history-item .delete-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(255, 0, 0, 0.2);
+            color: rgba(255, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            opacity: 0;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            z-index: 10;
+        }
+        
+        .chat-history-item:hover .delete-btn {
+            opacity: 1;
+        }
+        
+        .chat-history-item .delete-btn:hover {
+            background: rgba(255, 0, 0, 0.4);
+            color: rgba(255, 0, 0, 0.9);
+        }
+        
+        .clear-all-history {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 15px;
+            padding: 8px 12px;
+            background: rgba(255, 0, 0, 0.1);
+            color: rgba(255, 0, 0, 0.7);
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .clear-all-history:hover {
+            background: rgba(255, 0, 0, 0.2);
+            color: rgba(255, 0, 0, 0.9);
+        }
+        
+        .empty-history {
+            color: var(--text-tertiary);
+            text-align: center;
+            padding: 20px 0;
+        }
+        
+        /* Settings Modal */
+        .settings-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .settings-modal.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .settings-content {
+            width: 90%;
+            max-width: 500px;
+            background-color: var(--background);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .settings-header h3 {
+            margin: 0;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        .settings-header i {
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: color 0.2s;
+        }
+        
+        .settings-header i:hover {
+            color: var(--text-primary);
+        }
+        
+        .settings-body {
+            padding: 20px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        .settings-section {
+            margin-bottom: 24px;
+        }
+        
+        .settings-section h4 {
+            margin: 0 0 16px 0;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .form-group input[type="text"],
+        .form-group input[type="password"] {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background-color: var(--input-background);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        
+        .form-group input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+        
+        .api-key-container {
+            position: relative;
+        }
+        
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0;
+        }
+        
+        .toggle-password:hover {
+            color: var(--text-primary);
+        }
+        
+        .settings-button {
+            display: block;
+            width: 100%;
+            padding: 10px 16px;
+            border-radius: 6px;
+            border: none;
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 8px;
+        }
+        
+        .settings-button:hover {
+            background-color: var(--primary-hover);
+        }
+        
+        /* Switch toggle */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border-color);
+            transition: .4s;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+        }
+        
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+        
+        input:focus + .slider {
+            box-shadow: 0 0 1px var(--primary-color);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+        
+        .slider.round {
+            border-radius: 24px;
+        }
+        
+        .slider.round:before {
+            border-radius: 50%;
+        }
+        
+        .save-all-settings-button {
+            display: block;
+            width: 100%;
+            padding: 12px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.2s ease;
+            margin-top: 20px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .save-all-settings-button:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .save-all-settings-button i {
+            margin-right: 8px;
+        }
+        
+        .api-info {
+            background-color: rgba(var(--primary-rgb), 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        
+        .api-info p {
+            margin: 0 0 10px 0;
+        }
+        
+        .api-info a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        .api-info a:hover {
+            text-decoration: underline;
+        }
+        
+        .api-info code {
+            background: rgba(var(--primary-rgb), 0.2);
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-size: 12px;
+            word-break: break-all;
+        }
+        
+        /* Keyboard styles */
+        .keyboard kbd {
+            display: inline-block;
+            margin: 0 .1em;
+            padding: .1em .6em;
+            font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+            font-size: 11px;
+            line-height: 1.4;
+            color: #242729;
+            text-shadow: 0 1px 0 #FFF;
+            background-color: #e1e3e5;
+            border: 1px solid #adb3b9;
+            border-radius: 3px;
+            box-shadow: 0 1px 0 rgba(12,13,14,0.2), 0 0 0 2px #FFF inset;
+            white-space: nowrap;
+        }
+        
+        /* Formatting for markdown elements */
+        .message .bold {
+            font-weight: 700;
+        }
+        
+        .message .italic {
+            font-style: italic;
+        }
+        
+        .message .code {
+            font-family: monospace;
+            background-color: rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 3px;
+            padding: 1px 4px;
+            margin: 0 2px;
+            font-size: 0.9em;
+            color: #c7254e;
+        }
+        
+        :root[data-theme="dark"] .message .code {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #ff9e9e;
+        }
+        
+        /* Stop generation button */
+        .stop-generation-btn {
+            display: none;
+            position: absolute;
+            bottom: 10px;
+            right: 60px;
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            cursor: pointer;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+        }
+
+        .stop-generation-btn:hover {
+            background-color: #ff3333;
+            transform: scale(1.05);
+        }
+
+        .stop-generation-btn.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .chat-history-container {
+            width: 90%;
+        }
+        
+        .searching-container {
+            display: none;
+            margin: 10px 0;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            font-size: 14px;
+            color: rgba(0, 0, 0, 0.8);
+            font-weight: 500;
+            max-height: 200px;
+            overflow-y: auto;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .searching-container.active {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .searching-container .search-icon {
+            color: var(--primary-blue);
+            animation: pulse 1.5s infinite;
+        }
+        
+        /* New Chat Button styles */
+        #newChatButton {
+            background-color: var(--primary-blue);
+            color: white;
+        }
+        
+        #newChatButton:hover {
+            background-color: var(--primary-blue-hover, #0084db);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        @media (max-width: 768px) {
+            #newChatButton {
+                order: -1; /* Make it appear first on mobile */
+                margin-bottom: 5px;
+            }
+        }
+        
+        /* Safari and iOS specific fixes */
+        @supports (-webkit-touch-callout: none) {
+            /* iOS devices */
+            .chat-container {
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            /* Fix for position fixed issues when keyboard appears */
+            .search-container.input-active-mode {
+                position: absolute;
+            }
+            
+            /* Prevent double-tap zoom on buttons */
+            .action-button, .mic-button, .plus-button, 
+            .stop-generation-btn, .settings-button {
+                touch-action: manipulation;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background effects -->
+    <div class="blur-circle blur-circle-1"></div>
+    <div class="blur-circle blur-circle-2"></div>
+    
+    <!-- Theme switcher -->
+    <div class="theme-switcher">
+        <i class="fas fa-moon theme-icon"></i>
+        <div class="theme-toggle" id="themeToggle"></div>
+        <i class="fas fa-sun theme-icon"></i>
+    </div>
+    
+    <!-- AI Model Switcher -->
+    <div class="model-switcher" id="modelSwitcher">
+        <div class="model-switcher-header" id="modelSwitcherHeader">
+            <i class="fas fa-robot"></i>
+            <span>AI Models</span>
+            <i class="fas fa-chevron-down" style="margin-left: auto;"></i>
+        </div>
+        <div class="model-options" id="modelOptions">
+            <div class="model-option active" data-model="palama-default">
+                <div class="model-icon"><i class="fas fa-brain"></i></div>
+                <div class="model-name">Palama Default</div>
+            </div>
+            <div class="model-option" data-model="palama-pro">
+                <div class="model-icon"><i class="fas fa-bolt"></i></div>
+                <div class="model-name">Palama Pro</div>
+            </div>
+            <div class="model-option" data-model="creative">
+                <div class="model-icon"><i class="fas fa-paint-brush"></i></div>
+                <div class="model-name">Creative</div>
+            </div>
+            <div class="model-option" data-model="precise">
+                <div class="model-icon"><i class="fas fa-bullseye"></i></div>
+                <div class="model-name">Precise</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Chat History Button -->
+    <div class="chat-history-button" id="chatHistoryButton">
+        <i class="fas fa-history"></i>
+        <span>Previous Chats</span>
+    </div>
+    
+    <!-- Settings Button -->
+    <div class="settings-button-container" id="settingsButtonContainer">
+        <i class="fas fa-cog"></i>
+        <span>Settings</span>
+    </div>
+    
+    <!-- Chat History Container -->
+    <div class="chat-history-container" id="chatHistoryContainer">
+        <div class="chat-history-header">
+            <span>Chat History</span>
+            <i class="fas fa-times" id="closeHistoryButton"></i>
+        </div>
+        <div class="chat-history-list" id="chatHistoryList">
+            <!-- Sample chat history items (will be populated by JavaScript) -->
+        </div>
+    </div>
+    
+    <!-- Popup Menu -->
+    <div class="popup-menu" id="plusMenu">
+        <div class="popup-option" id="docOption">
+            <i class="fas fa-file-alt"></i>
+            <span>Document</span>
+        </div>
+        <div class="popup-option" id="imageOption">
+            <i class="fas fa-image"></i>
+            <span>Image</span>
+        </div>
+    </div>
+    
+    <!-- More Menu -->
+    <div class="more-menu" id="moreMenu">
+        <div class="more-option" id="codeOption">
+            <i class="fas fa-code"></i>
+            <span>Code</span>
+        </div>
+        <div class="more-option" id="writeOption">
+            <i class="fas fa-pen"></i>
+            <span>Help me write</span>
+        </div>
+        <div class="more-option" id="analyzeOption">
+            <i class="fas fa-chart-bar"></i>
+            <span>Analyze data</span>
+        </div>
+        <div class="more-option" id="brainstormOption">
+            <i class="fas fa-lightbulb"></i>
+            <span>Brainstorm</span>
+        </div>
+    </div>
+    
+    <!-- Hidden file inputs -->
+    <input type="file" id="docFileInput" class="file-input" accept=".pdf,.doc,.docx,.txt,.rtf,.odt">
+    <input type="file" id="imageFileInput" class="file-input" accept="image/*">
+    
+    <!-- Upload feedback toast -->
+    <div class="upload-feedback" id="uploadFeedback">
+        <i class="fas fa-check-circle success"></i>
+        <span id="feedbackMessage">File uploaded successfully!</span>
+    </div>
+    
+    <!-- Settings Modal -->
+    <div class="settings-modal" id="settingsModal">
+        <div class="settings-content">
+            <div class="settings-header">
+                <h3>Settings</h3>
+                <i class="fas fa-times" id="closeSettingsButton"></i>
+            </div>
+            <div class="settings-body">
+                <div class="settings-section">
+                    <h4>API Configuration</h4>
+                    <div class="form-group">
+                        <label for="apiKeyInput">API Key</label>
+                        <div class="api-key-container">
+                            <input type="password" id="apiKeyInput" placeholder="Enter your API key">
+                            <button id="toggleApiKeyVisibility" class="toggle-password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="modelEndpointInput">Model Endpoint (Optional)</label>
+                        <input type="text" id="modelEndpointInput" placeholder="https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent">
+                    </div>
+                    <button id="saveApiSettings" class="settings-button">Save API Settings</button>
+                </div>
+                <div class="settings-section">
+                    <h4>Interface Settings</h4>
+                    <div class="form-group">
+                        <label for="darkModeToggle">Dark Mode</label>
+                        <label class="switch">
+                            <input type="checkbox" id="darkModeToggle" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Save All Settings Button -->
+                <button id="saveAllSettings" class="save-all-settings-button">
+                    <i class="fas fa-save"></i> Save All Settings
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="logo">Palama AI</div>
+        
+        <h1 class="main-title" id="mainTitle">Hi there! How can I help you?</h1>
+        
+        <!-- Chat container for messages -->
+        <div class="chat-container" id="chatContainer"></div>
+        
+        <div class="search-container" id="searchContainer">
+            <div class="search-input-wrapper">
+                <div class="input-controls">
+                    <button class="plus-button" id="plusButton">+</button>
+                </div>
+                <input type="text" class="search-input" placeholder="Ask anything" id="searchInput">
+                <button class="mic-button" id="micButton">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <button class="stop-generation-btn" id="stopGenerationBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="recording-wave" id="recordingWave">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+            <div class="sub-options" id="subOptions"></div>
+            <div class="bottom-buttons">
+                <button class="bottom-button" id="searchButton">
+                    <i class="fas fa-search"></i> DeepSearch
+                </button>
+                <button class="bottom-button" id="thinkingButton">
+                    <i class="fas fa-lightbulb"></i> Thinking
+                </button>
+                <button class="bottom-button" id="newChatButton">
+                    <i class="fas fa-plus"></i> New Chat
+                </button>
+            </div>
+        </div>
+        
+        <div class="actions">
+            <button class="action-button">
+                <i class="fas fa-image"></i> Create image
+            </button>
+            <button class="action-button">
+                <i class="fas fa-file-alt"></i> Summarize text
+            </button>
+            <button class="action-button">
+                <i class="fas fa-tasks"></i> Make a plan
+            </button>
+            <button class="action-button">
+                <i class="fas fa-magic"></i> Surprise me
+            </button>
+            <button class="action-button" id="moreButton">
+                <i class="fas fa-ellipsis-h"></i> More
+            </button>
+        </div>
+        
+        <div class="thinking-container" id="thinkingContainer">
+            <div class="thinking-header" id="thinkingHeader">
+                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cGF0aCBmaWxsPSIjMDk5ZWZmIiBkPSJNMTIwLDIwYzU1LjIsMCwxMDAsNDQuOCwxMDAsMTAwcy00NC44LDEwMC0xMDAsMTAwUzIwLDE3NS4yLDIwLDEyMFM2NC44LDIwLDEyMCwyMFptMCwxNzJjMzkuOCwwLDcyLTMyLjIsNzItNzJzLTMyLjItNzItNzItNzJzLTcyLDMyLjItNzIsNzJTODAuMiwxOTIsMTIwLDE5MloiLz48cGF0aCBmaWxsPSIjMDk5ZWZmIiBkPSJNMTgwLDEyMGMwLDMzLjEtMjYuOSw2MC06MCw2MHMtNjAtMjYuOS02MC02MGgyNGMwLDE5LjksMTYuMSwzNiwzNiwzNnMzNi0xNi4xLDM2LTM2SDE4MFoiLz48cGF0aCBmaWxsPSIjMDk5ZWZmIiBkPSJNMTIwLDE1NmMtMTkuOSwwLTM2LTE2LjEtMzYtMzZoNzJjMCwxOS45LTE2LjEsMzYtMzYsMzZaIi8+PC9zdmc+" class="ai-logo" id="thinkingLogo" alt="Palama AI">
+                <span id="thinkingText">Thinking...</span>
+            </div>
+            <div class="thinking-steps" id="thinkingSteps">
+                <!-- Thinking steps will be added here -->
+            </div>
+        </div>
+        
+        <div class="searching-container" id="searchingContainer">
+            <i class="fas fa-search search-icon"></i>
+            <span>Searching...</span>
+        </div>
+        
+        <div style="position: absolute; bottom: 20px; display: flex; justify-content: center; gap: 20px; color: var(--text-secondary); font-size: 12px;">
+            <div>Palama AI can make mistakes. Check important info.</div>
+            <div>?</div>
+        </div>
+    </div>
+
+    <script>
+        // Mobile viewport height fix for handling address bar collapse
+        function setMobileVh() {
+            // First we get the viewport height and we multiply it by 1% to get a value for a vh unit
+            let vh = window.innerHeight * 0.01;
+            // Then we set the value in the --vh custom property to the root of the document
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        }
+        
+        // Set the vh value initially and on resize/orientation change
+        setMobileVh();
+        window.addEventListener('resize', setMobileVh);
+        window.addEventListener('orientationchange', () => {
+            // Add a slight delay after orientation change to get the correct height
+            setTimeout(setMobileVh, 100);
+        });
+        
+        // Add subtle hover effects and animations
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('searchInput');
+            const micButton = document.getElementById('micButton');
+            const plusButton = document.getElementById('plusButton');
+            const plusMenu = document.getElementById('plusMenu');
+            const docOption = document.getElementById('docOption');
+            const imageOption = document.getElementById('imageOption');
+            const uploadInput = document.getElementById('uploadInput');
+            const fileInfo = document.getElementById('fileInfo');
+            const uploadModal = document.getElementById('uploadModal');
+            const chatContainer = document.getElementById('chatContainer');
+            const searchContainer = document.getElementById('searchContainer');
+            const mainTitle = document.getElementById('mainTitle');
+            const recordingWave = document.getElementById('recordingWave');
+            const thinkingButton = document.getElementById('thinkingButton');
+            const thinkingContainer = document.getElementById('thinkingContainer');
+            const thinkingHeader = document.getElementById('thinkingHeader');
+            const thinkingSteps = document.getElementById('thinkingSteps');
+            const thinkingLogo = document.getElementById('thinkingLogo');
+            const searchingContainer = document.getElementById('searchingContainer');
+            const searchButton = document.getElementById('searchButton');
+            const moreButton = document.getElementById('moreButton');
+            const moreMenu = document.getElementById('moreMenu');
+            
+            // Mode states
+            let thinkingMode = false;
+            let searchMode = false;
+            
+            // Toggle thinking mode when clicking the thinking button
+            thinkingButton.addEventListener('click', function() {
+                thinkingMode = !thinkingMode;
+                this.classList.toggle('active', thinkingMode);
+            });
+            
+            // Toggle search mode when clicking the search button
+            searchButton.addEventListener('click', function() {
+                searchMode = !searchMode;
+                this.classList.toggle('active', searchMode);
+            });
+            
+            // Toggle thinking steps expansion when clicking the header
+            thinkingHeader.addEventListener('click', function() {
+                thinkingSteps.classList.toggle('expanded');
+            });
+            
+            // Function to send a message
+            async function sendMessage() {
+                const messageText = searchInput.value.trim();
+                
+                if (messageText) {
+                    console.log('Sending message:', messageText);
+                    
+                    // Add user message to chat
+                    addMessage(messageText, 'user');
+                    
+                    // Clear search input
+                    searchInput.value = '';
+                    
+                    // Hide sub-options
+                    subOptions.classList.remove('active');
+                    
+                    // Check if this is the first message
+                    if (!chatContainer.classList.contains('active')) {
+                        // First message - setup UI
+                        chatContainer.classList.add('active');
+                        mainTitle.style.display = 'none';
+                        
+                        // Move search container to bottom and hide action buttons
+                        document.querySelector('.actions').classList.add('hidden');
+                        searchContainer.classList.add('input-active-mode');
+                        
+                        // Move bottom buttons inside the search container when in active mode
+                        const bottomButtons = document.querySelector('.bottom-buttons');
+                        if (!searchContainer.contains(bottomButtons)) {
+                            searchContainer.appendChild(bottomButtons);
+                        }
+                    }
+                    
+                    // Send the message
+                    sendMessage();
+                }
+            };
+            
+            // Plus button popup functionality
+            plusButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Plus button clicked');
+                
+                // Position the menu relative to the button
+                const buttonRect = plusButton.getBoundingClientRect();
+                plusMenu.style.position = 'absolute';
+                plusMenu.style.left = (buttonRect.left) + 'px';
+                plusMenu.style.top = (buttonRect.top - 100) + 'px';
+                plusMenu.style.transform = 'none';
+                
+                plusMenu.classList.toggle('show');
+                console.log('Popup menu toggled:', plusMenu.classList.contains('show'));
+            });
+            
+            // Document option click handler
+            docOption.addEventListener('click', function() {
+                docFileInput.click();
+                plusMenu.classList.remove('show');
+            });
+            
+            // Image option click handler
+            imageOption.addEventListener('click', function() {
+                imageFileInput.click();
+                plusMenu.classList.remove('show');
+            });
+            
+            // Document file change handler with security checks
+            docFileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                // Check file size (max 10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    showFeedback('File too large. Maximum size is 10MB.', 'error');
+                    return;
+                }
+                
+                // Check file extension
+                const validExtensions = ['.pdf', '.doc', '.docx', '.txt', '.rtf', '.odt'];
+                const fileName = file.name.toLowerCase();
+                const fileExt = '.' + fileName.split('.').pop();
+                
+                if (!validExtensions.includes(fileExt)) {
+                    showFeedback('Invalid file type. Please upload a document file.', 'error');
+                    return;
+                }
+                
+                // Check for potentially malicious files
+                if (fileExt === '.pdf' || fileExt === '.doc' || fileExt === '.docx') {
+                    // Simulating a security scan
+                    showFeedback('Scanning document for security threats...', 'warning');
+                    
+                    setTimeout(() => {
+                        // In a real application, you would perform actual scanning here
+                        showFeedback('Document uploaded successfully!', 'success');
+                        
+                        // Add the file name to the input field as feedback
+                        searchInput.value = 'Analyzing document: ' + file.name;
+                    }, 1500);
+                } else {
+                    showFeedback('Document uploaded successfully!', 'success');
+                    searchInput.value = 'Analyzing document: ' + file.name;
+                }
+                
+                // Reset the file input to allow uploading the same file again
+                e.target.value = '';
+            });
+            
+            // Image file change handler
+            imageFileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                // Check file size (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    showFeedback('Image too large. Maximum size is 5MB.', 'error');
+                    return;
+                }
+                
+                // Check file type
+                if (!file.type.startsWith('image/')) {
+                    showFeedback('Invalid file type. Please upload an image.', 'error');
+                    return;
+                }
+                
+                showFeedback('Image uploaded successfully!', 'success');
+                searchInput.value = 'Analyzing image: ' + file.name;
+                
+                // Reset the file input
+                e.target.value = '';
+            });
+            
+            // Function to show feedback toast
+            function showFeedback(message, type) {
+                // Set message
+                feedbackMessage.textContent = message;
+                
+                // Set icon
+                const iconElement = uploadFeedback.querySelector('i');
+                iconElement.className = ''; // Remove all classes
+                iconElement.classList.add('fas');
+                
+                if (type === 'success') {
+                    iconElement.classList.add('fa-check-circle', 'success');
+                    uploadFeedback.style.backgroundColor = 'rgba(20, 170, 92, 0.9)';
+                } else if (type === 'error') {
+                    iconElement.classList.add('fa-exclamation-circle', 'error');
+                    uploadFeedback.style.backgroundColor = 'rgba(220, 53, 69, 0.9)';
+                } else if (type === 'warning') {
+                    iconElement.classList.add('fa-exclamation-triangle', 'warning');
+                    uploadFeedback.style.backgroundColor = 'rgba(255, 166, 0, 0.9)';
+                }
+                
+                // Show feedback
+                uploadFeedback.classList.add('show');
+                
+                // Hide after 3 seconds
+                setTimeout(() => {
+                    uploadFeedback.classList.remove('show');
+                }, 3000);
+            }
+            
+            // Close popup when clicking elsewhere
+            document.addEventListener('click', function(e) {
+                console.log('Document clicked');
+                if (plusMenu.classList.contains('show')) {
+                    plusMenu.classList.remove('show');
+                    console.log('Popup menu closed');
+                }
+                
+                if (moreMenu.classList.contains('show')) {
+                    moreMenu.classList.remove('show');
+                    console.log('More menu closed');
+                }
+            });
+            
+            // Prevent closing when clicking inside the popup
+            plusMenu.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+            
+            moreMenu.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+            
+            // Add simple keyboard shortcut
+            document.addEventListener('keydown', function(e) {
+                if (e.key === '/' && document.activeElement !== searchInput) {
+                    e.preventDefault();
+                    searchInput.focus();
+                }
+                
+                // Close popup on escape key
+                if (e.key === 'Escape') {
+                    plusMenu.classList.remove('show');
+                    moreMenu.classList.remove('show');
+                }
+            });
+            
+            // More button functionality
+            moreButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('More button clicked');
+                
+                // Position the menu relative to the button
+                const buttonRect = moreButton.getBoundingClientRect();
+                moreMenu.style.position = 'absolute';
+                moreMenu.style.left = (buttonRect.left) + 'px';
+                moreMenu.style.top = (buttonRect.top - 100) + 'px';
+                moreMenu.style.transform = 'none';
+                
+                moreMenu.classList.toggle('show');
+                console.log('More menu toggled:', moreMenu.classList.contains('show'));
+            });
+            
+            // Voice recording functionality
+            let recording = false;
+            let audioChunks = [];
+            let mediaRecorder;
+            let audioContext;
+            let analyser;
+            let dataArray;
+            let waveformBars;
+            let animationId;
+            
+            function startRecording() {
+                if (recording) {
+                    stopRecording();
+                } else {
+                    recording = true;
+                    micButton.classList.add('recording');
+                    searchInput.classList.add('recording');
+                    searchInput.value = '';
+                    searchInput.placeholder = '';
+                    recordingWave.classList.add('active');
+                    waveformBars = document.querySelectorAll('.recording-wave span');
+                    
+                    navigator.mediaDevices.getUserMedia({ audio: true })
+                        .then(stream => {
+                            mediaRecorder = new MediaRecorder(stream);
+                            audioChunks = [];
+                            
+                            // Set up audio visualization
+                            setupAudioVisualization(stream);
+                            
+                            mediaRecorder.ondataavailable = event => {
+                                audioChunks.push(event.data);
+                            };
+                            
+                            mediaRecorder.onstop = () => {
+                                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                                
+                                // Simulate voice-to-text conversion
+                                setTimeout(() => {
+                                    const fakeTranscriptions = [
+                                        "Show me the latest news",
+                                        "What's the weather like today?",
+                                        "Tell me a joke",
+                                        "How does machine learning work?",
+                                        "What are the trending topics in AI?"
+                                    ];
+                                    
+                                    const randomText = fakeTranscriptions[Math.floor(Math.random() * fakeTranscriptions.length)];
+                                    searchInput.value = randomText;
+                                    
+                                    // Send the transcribed message
+                                    sendMessage();
+                                }, 1000);
+                            };
+                            
+                            mediaRecorder.start();
+                            
+                            // Set a timeout to automatically stop recording after 5 seconds
+                            setTimeout(() => {
+                                if (recording) {
+                                    stopRecording();
+                                }
+                            }, 5000);
+                        })
+                        .catch(error => {
+                            console.error('Error starting recording:', error);
+                            alert("Could not access your microphone. Please check permissions.");
+                        });
+                }
+            }
+            
+            function setupAudioVisualization(stream) {
+                // Create audio context
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                const source = audioContext.createMediaStreamSource(stream);
+                source.connect(analyser);
+                
+                // Configure analyser
+                analyser.fftSize = 64;
+                const bufferLength = analyser.frequencyBinCount;
+                dataArray = new Uint8Array(bufferLength);
+                
+                // Start visualization loop
+                visualize();
+            }
+            
+            function visualize() {
+                if (!recording) return;
+                
+                // Get frequency data
+                analyser.getByteFrequencyData(dataArray);
+                
+                // Update each bar in the waveform
+                for (let i = 0; i < waveformBars.length; i++) {
+                    // Calculate a value based on frequency data
+                    // Use different frequency bands for each bar for variety
+                    const index = Math.floor(i * dataArray.length / waveformBars.length);
+                    const value = dataArray[index];
+                    
+                    // Map the value (0-255) to a reasonable height (5-25px)
+                    const height = 5 + (value / 255) * 20;
+                    waveformBars[i].style.height = `${height}px`;
+                    
+                    // Optional: Change color intensity based on volume
+                    const intensity = Math.min(255, value + 100);
+                    waveformBars[i].style.backgroundColor = `rgb(0, ${intensity}, 255)`;
+                }
+                
+                // Continue the animation loop
+                animationId = requestAnimationFrame(visualize);
+            }
+            
+            function stopRecording() {
+                if (recording && mediaRecorder) {
+                    recording = false;
+                    micButton.classList.remove('recording');
+                    searchInput.classList.remove('recording');
+                    
+                    // Stop the visualization
+                    if (animationId) {
+                        cancelAnimationFrame(animationId);
+                        animationId = null;
+                    }
+                    
+                    // Close audio context if it exists
+                    if (audioContext) {
+                        audioContext.close().then(() => console.log('Audio context closed'));
+                    }
+                    
+                    // Reset waveform bars
+                    if (waveformBars) {
+                        waveformBars.forEach(bar => {
+                            bar.style.height = '5px';
+                            bar.style.backgroundColor = 'var(--primary-blue)';
+                        });
+                    }
+                    
+                    // Stop all tracks to release the microphone
+                    mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                    mediaRecorder.stop();
+                }
+            }
+            
+            // Get element references for more menu options
+            const codeOption = document.getElementById('codeOption');
+            const writeOption = document.getElementById('writeOption');
+            const analyzeOption = document.getElementById('analyzeOption');
+            const brainstormOption = document.getElementById('brainstormOption');
+            const subOptions = document.getElementById('subOptions');
+            
+            // Sub-options for each main option
+            const optionSubMenus = {
+                code: [
+                    "Generate a game with Python",
+                    "Create a web scraper",
+                    "Build a simple weather app",
+                    "Make a data visualization tool",
+                    "Design a RESTful API"
+                ],
+                write: [
+                    "Write a blog post about AI",
+                    "Create a product description",
+                    "Draft an email to a client",
+                    "Write a persuasive paragraph",
+                    "Compose a professional bio"
+                ],
+                analyze: [
+                    "Analyze customer survey data",
+                    "Extract insights from sales figures",
+                    "Interpret market research trends",
+                    "Evaluate product performance metrics",
+                    "Review website analytics"
+                ],
+                brainstorm: [
+                    "Brainstorm app ideas for education",
+                    "Generate marketing campaign concepts",
+                    "Think of names for a tech startup",
+                    "Create content topics for social media",
+                    "Develop product feature ideas"
+                ]
+            };
+            
+            // Function to handle option selection
+            function handleOptionSelect(optionType, defaultText) {
+                // Close the more menu
+                moreMenu.classList.remove('show');
+                
+                // Set input value to the default text
+                searchInput.value = defaultText;
+                searchInput.focus();
+                
+                // Create and display sub-options
+                subOptions.innerHTML = '';
+                
+                optionSubMenus[optionType].forEach(option => {
+                    const subOption = document.createElement('div');
+                    subOption.classList.add('sub-option');
+                    subOption.textContent = option;
+                    
+                    // Add click handler for sub-option
+                    subOption.addEventListener('click', function() {
+                        searchInput.value = this.textContent;
+                        searchInput.focus();
+                        // Optional: automatically send the message
+                        // sendMessage();
+                    });
+                    
+                    subOptions.appendChild(subOption);
+                });
+                
+                // Show the sub-options
+                subOptions.classList.add('active');
+            }
+            
+            // Add click handlers for each option
+            codeOption.addEventListener('click', function() {
+                handleOptionSelect('code', 'Generate code');
+            });
+            
+            writeOption.addEventListener('click', function() {
+                handleOptionSelect('write', 'Help me write');
+            });
+            
+            analyzeOption.addEventListener('click', function() {
+                handleOptionSelect('analyze', 'Analyze data');
+            });
+            
+            brainstormOption.addEventListener('click', function() {
+                handleOptionSelect('brainstorm', 'Brainstorm ideas');
+            });
+            
+            // Theme switcher functionality
+            const themeToggle = document.getElementById('themeToggle');
+            const root = document.documentElement;
+            
+            // Check for saved theme preference
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            root.setAttribute('data-theme', savedTheme);
+            themeToggle.classList.toggle('light', savedTheme === 'light');
+            
+            themeToggle.addEventListener('click', function() {
+                const currentTheme = root.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                
+                root.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                this.classList.toggle('light');
+            });
+            
+            // AI Model switcher functionality
+            const modelSwitcher = document.getElementById('modelSwitcher');
+            const modelSwitcherHeader = document.getElementById('modelSwitcherHeader');
+            const modelOptionsContainer = document.getElementById('modelOptions');
+            const modelOptions = document.querySelectorAll('.model-option');
+            let currentModel = 'palama-default';
+            
+            // Check for saved model preference
+            const savedModel = localStorage.getItem('aiModel') || 'palama-default';
+            currentModel = savedModel;
+            
+            // Update active state based on saved preference
+            modelOptions.forEach(option => {
+                const modelId = option.getAttribute('data-model');
+                if (modelId === currentModel) {
+                    option.classList.add('active');
+                } else {
+                    option.classList.remove('active');
+                }
+            });
+            
+            // Toggle model options visibility when header is clicked
+            modelSwitcherHeader.addEventListener('click', function() {
+                modelSwitcher.classList.toggle('expanded');
+                const isExpanded = modelSwitcher.classList.contains('expanded');
+                const icon = this.querySelector('.fa-chevron-down');
+                if (isExpanded) {
+                    icon.style.transform = 'rotate(180deg)';
+                } else {
+                    icon.style.transform = 'rotate(0deg)';
+                }
+            });
+            
+            // Add click handlers for model options
+            modelOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    const modelId = this.getAttribute('data-model');
+                    
+                    // Update active state
+                    modelOptions.forEach(opt => opt.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Save preference
+                    currentModel = modelId;
+                    localStorage.setItem('aiModel', modelId);
+                    
+                    // Optional: Show a notification that model was changed
+                    const modelName = this.querySelector('.model-name').textContent;
+                    showNotification(`Switched to ${modelName}`);
+                });
+            });
+            
+            // Function to show a notification
+            function showNotification(message, type = 'success') {
+                const notification = document.createElement('div');
+                notification.classList.add('notification');
+                
+                if (type === 'error') {
+                    notification.classList.add('notification-error');
+                }
+                
+                notification.textContent = message;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.classList.add('show');
+                }, 10);
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 300);
+                }, 3000);
+            }
+            
+            // Chat history functionality
+            const chatHistoryButton = document.getElementById('chatHistoryButton');
+            const chatHistoryContainer = document.getElementById('chatHistoryContainer');
+            const closeHistoryButton = document.getElementById('closeHistoryButton');
+            const chatHistoryList = document.getElementById('chatHistoryList');
+            
+            // Initialize chat history array
+            let chatHistory = [];
+            
+            // Load chat history from localStorage
+            function loadChatHistoryFromStorage() {
+                const savedHistory = localStorage.getItem('chatHistory');
+                if (savedHistory) {
+                    try {
+                        chatHistory = JSON.parse(savedHistory);
+                    } catch (e) {
+                        console.error('Error parsing chat history:', e);
+                        chatHistory = [];
+                    }
+                }
+            }
+            
+            // Save chat history to localStorage
+            function saveChatHistoryToStorage() {
+                localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+            }
+            
+            // Get current messages from the chat
+            function getCurrentChatMessages() {
+                const messages = [];
+                const messageElements = chatContainer.querySelectorAll('.message');
+                
+                messageElements.forEach(el => {
+                    if (el.classList.contains('user')) {
+                        messages.push('User: ' + el.textContent.trim());
+                    } else if (el.classList.contains('ai')) {
+                        // For AI messages, we need to get text from the typing-effect div
+                        const typingEffect = el.querySelector('.typing-effect');
+                        if (typingEffect) {
+                            messages.push('AI: ' + typingEffect.textContent.trim());
+                        }
+                    }
+                });
+                
+                return messages;
+            }
+            
+            // Generate a title from the first user message
+            function generateTitleFromMessages(messages) {
+                if (!messages || messages.length === 0) return "New Conversation";
+                
+                // Find the first user message
+                const firstUserMessage = messages.find(msg => msg.startsWith('User:'));
+                if (!firstUserMessage) return "New Conversation";
+                
+                // Extract content without "User: " prefix
+                const content = firstUserMessage.substring(6).trim();
+                
+                // Limit to first 30 characters for title
+                return content.length > 30 ? content.substring(0, 30) + '...' : content;
+            }
+            
+            // Save current chat to history
+            function saveCurrentChatToHistory() {
+                const messages = getCurrentChatMessages();
+                if (messages.length === 0) return; // Don't save empty chats
+                
+                const now = new Date();
+                const dateString = now.toISOString().split('T')[0]; // YYYY-MM-DD
+                
+                const newChat = {
+                    id: Date.now(), // Unique ID based on timestamp
+                    title: generateTitleFromMessages(messages),
+                    date: dateString,
+                    content: messages
+                };
+                
+                // Add to the beginning of the array (most recent first)
+                chatHistory.unshift(newChat);
+                
+                // Limit to 20 most recent conversations
+                if (chatHistory.length > 20) {
+                    chatHistory = chatHistory.slice(0, 20);
+                }
+                
+                // Save to localStorage
+                saveChatHistoryToStorage();
+            }
+            
+            // Function to populate chat history
+            function populateChatHistory() {
+                // Load the latest from storage
+                loadChatHistoryFromStorage();
+                
+                chatHistoryList.innerHTML = '';
+                
+                if (chatHistory.length === 0) {
+                    chatHistoryList.innerHTML = '<div class="empty-history">No previous conversations</div>';
+                    return;
+                }
+                
+                chatHistory.forEach(chat => {
+                    const historyItem = document.createElement('div');
+                    historyItem.classList.add('chat-history-item');
+                    historyItem.setAttribute('data-id', chat.id);
+                    
+                    historyItem.innerHTML = `
+                        <div class="icon"><i class="fas fa-comment"></i></div>
+                        <div class="title">${chat.title}</div>
+                        <div class="date">${formatDate(chat.date)}</div>
+                        <div class="delete-btn" title="Delete this conversation"><i class="fas fa-times"></i></div>
+                    `;
+                    
+                    // Main click loads the chat
+                    historyItem.addEventListener('click', function() {
+                        if (!e.target.closest('.delete-btn')) {
+                            loadChatHistory(chat);
+                            chatHistoryContainer.classList.remove('visible');
+                        }
+                    });
+                    
+                    // Delete button removes the chat
+                    const deleteBtn = historyItem.querySelector('.delete-btn');
+                    deleteBtn.addEventListener('click', function(e) {
+                        e.stopPropagation(); // Stop the click from bubbling to the history item
+                        deleteChat(chat.id);
+                    });
+                    
+                    chatHistoryList.appendChild(historyItem);
+                });
+                
+                // Add a "Clear All" button if there are chats
+                if (chatHistory.length > 0) {
+                    const clearAllBtn = document.createElement('div');
+                    clearAllBtn.classList.add('clear-all-history');
+                    clearAllBtn.innerHTML = '<i class="fas fa-trash"></i> Clear All Chat History';
+                    clearAllBtn.addEventListener('click', clearAllChatHistory);
+                    chatHistoryList.appendChild(clearAllBtn);
+                }
+            }
+            
+            // Function to delete a specific chat from history
+            function deleteChat(chatId) {
+                // Find the chat index
+                const chatIndex = chatHistory.findIndex(chat => chat.id == chatId);
+                
+                if (chatIndex !== -1) {
+                    // Remove the chat from the array
+                    chatHistory.splice(chatIndex, 1);
+                    
+                    // Save the updated history
+                    saveChatHistoryToStorage();
+                    
+                    // Update the display
+                    populateChatHistory();
+                    
+                    // Show notification
+                    showNotification('Conversation deleted');
+                }
+            }
+            
+            // Function to clear all chat history
+            function clearAllChatHistory() {
+                // Confirm before clearing
+                const confirmClear = confirm('Are you sure you want to delete all chat history? This cannot be undone.');
+                
+                if (confirmClear) {
+                    // Clear the chat history array
+                    chatHistory = [];
+                    
+                    // Save empty array to storage
+                    saveChatHistoryToStorage();
+                    
+                    // Update the display
+                    populateChatHistory();
+                    
+                    // Show notification
+                    showNotification('All chat history cleared');
+                }
+            }
+            
+            // Function to load a chat history
+            function loadChatHistory(chat) {
+                // Clear current chat
+                chatContainer.innerHTML = '';
+                
+                // Load the chat history
+                chat.content.forEach(message => {
+                    if (message.startsWith('User:')) {
+                        addMessage(message.substring(6).trim(), 'user');
+                    } else if (message.startsWith('AI:')) {
+                        addMessage(message.substring(4).trim(), 'ai');
+                    }
+                });
+                
+                showNotification(`Loaded chat: ${chat.title}`);
+            }
+            
+            // Toggle chat history visibility
+            chatHistoryButton.addEventListener('click', function() {
+                populateChatHistory();
+                chatHistoryContainer.classList.toggle('visible');
+            });
+            
+            // Close history when X is clicked
+            closeHistoryButton.addEventListener('click', function(e) {
+                e.stopPropagation();
+                chatHistoryContainer.classList.remove('visible');
+            });
+            
+            // Close history when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!chatHistoryContainer.contains(e.target) && 
+                    e.target !== chatHistoryButton && 
+                    !chatHistoryButton.contains(e.target)) {
+                    chatHistoryContainer.classList.remove('visible');
+                }
+            });
+            
+            // Load chat history when the page loads
+            loadChatHistoryFromStorage();
+            
+            // Format date to be more user-friendly
+            function formatDate(dateString) {
+                const date = new Date(dateString);
+                const now = new Date();
+                const diff = now - date;
+                const dayInMs = 24 * 60 * 60 * 1000;
+                
+                if (diff < dayInMs) {
+                    return 'Today';
+                } else if (diff < 2 * dayInMs) {
+                    return 'Yesterday';
+                } else {
+                    return date.toLocaleDateString();
+                }
+            }
+            
+            // Function to use the API to generate responses
+            async function generateAPIResponse(userMessage) {
+                const apiKey = localStorage.getItem('apiKey');
+                let endpoint = localStorage.getItem('modelEndpoint') || 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+                
+                if (!apiKey) {
+                    // Show error notification if no API key
+                    showNotification('API key not set. Please enter your API key in Settings.', 'error');
+                    return "I'm sorry, but you need to set up your API key in the settings before I can provide a proper response.";
+                }
+                
+                try {
+                    console.log("Sending message to API:", userMessage);
+                    
+                    // Construct API URL for Google AI Studio
+                    const apiUrl = `${endpoint}?key=${apiKey}`;
+                    
+                    // Prepare request body for Google AI Studio
+                    const requestBody = {
+                        contents: [
+                            {
+                                parts: [
+                                    {
+                                        text: userMessage
+                                    }
+                                ]
+                            }
+                        ],
+                        generationConfig: {
+                            temperature: 0.7,
+                            maxOutputTokens: 1024
+                        }
+                    };
+                    
+                    console.log("Sending request with body:", JSON.stringify(requestBody));
+                    
+                    try {
+                        // Better error handling with detailed console logging
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify(requestBody),
+                            mode: 'cors'
+                        });
+                        
+                        console.log("Response status:", response.status);
+                        
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            console.error("API Error response:", errorText);
+                            throw new Error(`API error (${response.status}): ${errorText || response.statusText}`);
+                        }
+                        
+                        const data = await response.json();
+                        console.log("API response data:", data);
+                        
+                        // Extract text from Google AI Studio response format
+                        if (data && data.candidates && data.candidates[0] && data.candidates[0].content && 
+                            data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
+                            return data.candidates[0].content.parts[0].text;
+                        } else if (data && data.response) {
+                            // Fallback to aimlapi format if somehow returned
+                            return data.response;
+                        } else {
+                            console.error("Unexpected API response format:", data);
+                            throw new Error("تم استلام استجابة من الخادم ولكن التنسيق غير مفهوم. يرجى التحقق من إعدادات API.");
+                        }
+                    } catch (error) {
+                        console.error("Fetch error:", error);
+                        
+                        // Try a different endpoint pattern as a fallback
+                        try {
+                            console.log("Trying alternative API endpoint...");
+                            const alternativeEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+                            const altApiUrl = `${alternativeEndpoint}?key=${apiKey}`;
+                            
+                            const altResponse = await fetch(altApiUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json'
+                                },
+                                body: JSON.stringify(requestBody),
+                                mode: 'cors'
+                            });
+                            
+                            if (!altResponse.ok) {
+                                throw new Error(`Alternative API request failed with status ${altResponse.status}`);
+                            }
+                            
+                            const altData = await altResponse.json();
+                            console.log("Alternative API response:", altData);
+                            
+                            if (altData && altData.candidates && altData.candidates[0] && altData.candidates[0].content && 
+                                altData.candidates[0].content.parts && altData.candidates[0].content.parts[0]) {
+                                return altData.candidates[0].content.parts[0].text;
+                            } else {
+                                throw new Error("Alternative API request succeeded but returned unexpected format");
+                            }
+                        } catch (altError) {
+                            console.error("Alternative API request also failed:", altError);
+                            
+                            // If no approach worked, show a comprehensive error message
+                            showNotification('خطأ في استدعاء API: ' + error.message, 'error');
+                            return `عذراً، واجهت خطأ أثناء محاولة إنشاء استجابة. المشكلة الأكثر احتمالاً هي:
+
+1. مفتاح API غير صحيح أو منتهي الصلاحية
+2. عنوان نقطة النهاية (Endpoint) غير صحيح - حاول تغييره إلى https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent
+3. مشكلة في اتصال الإنترنت
+
+الخطأ: ${error.message}`;
+                        }
+                    }
+                } catch (error) {
+                    console.error('API Error:', error);
+                    
+                    // Try a different endpoint pattern as a fallback
+                    try {
+                        console.log("Trying alternative API endpoint...");
+                        const alternativeEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+                        const altApiUrl = `${alternativeEndpoint}?key=${apiKey}`;
+                        
+                        const altResponse = await fetch(altApiUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify(requestBody),
+                            mode: 'cors'
+                        });
+                        
+                        if (!altResponse.ok) {
+                            throw new Error(`Alternative API request failed with status ${altResponse.status}`);
+                        }
+                        
+                        const altData = await altResponse.json();
+                        console.log("Alternative API response:", altData);
+                        
+                        if (altData && altData.candidates && altData.candidates[0] && altData.candidates[0].content && 
+                            altData.candidates[0].content.parts && altData.candidates[0].content.parts[0]) {
+                            return altData.candidates[0].content.parts[0].text;
+                        } else {
+                            throw new Error("Alternative API request succeeded but returned unexpected format");
+                        }
+                    } catch (altError) {
+                        console.error("Alternative API request also failed:", altError);
+                        
+                        // If no approach worked, show a comprehensive error message
+                        showNotification('خطأ في استدعاء API: ' + error.message, 'error');
+                        return `عذراً، واجهت خطأ أثناء محاولة إنشاء استجابة. المشكلة الأكثر احتمالاً هي:
+1. مفتاح API غير صحيح أو منتهي الصلاحية
+2. عنوان نقطة النهاية (Endpoint) غير صحيح - حاول تغييره إلى https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent
+3. مشكلة في اتصال الإنترنت
+
+الخطأ: ${error.message}`;
+                    }
+                }
+            }
+            
+            // Modified sendMessage function to use API if key is available
+            function sendMessage() {
+                console.log('Send message function called');
+                const userMessage = searchInput.value.trim();
+                
+                if (userMessage !== '') {
+                    console.log('User message:', userMessage);
+                    
+                    // Add user message to chat
+                    addMessage(userMessage, 'user');
+                    
+                    // Clear input
+                    searchInput.value = '';
+                    
+                    // Hide sub-options
+                    subOptions.classList.remove('active');
+                    
+                    // Show chat container and activate chat mode
+                    chatContainer.classList.add('active');
+                    mainTitle.style.display = 'none';
+                    
+                    // Move search container to bottom and hide action buttons
+                    document.querySelector('.actions').classList.add('hidden');
+                    searchContainer.classList.add('input-active-mode');
+                    
+                    // Move bottom buttons inside the search container when in active mode
+                    const bottomButtons = document.querySelector('.bottom-buttons');
+                    if (!searchContainer.contains(bottomButtons)) {
+                        searchContainer.appendChild(bottomButtons);
+                    }
+                    
+                    // Check if API key is set and use it if available
+                    const apiKey = localStorage.getItem('apiKey');
+                    
+                    if (apiKey) {
+                        // Start thinking animation
+                        thinkingContainer.classList.add('active');
+                        chatContainer.appendChild(thinkingContainer);
+                        thinkingLogo.classList.add('rotate-animation');
+                        
+                        // Call the API
+                        generateAPIResponse(userMessage).then(response => {
+                            // Hide thinking container
+                            thinkingContainer.classList.remove('active');
+                            thinkingLogo.classList.remove('rotate-animation');
+                            
+                            if (response) {
+                                // Add AI response to chat
+                                addMessage(response, 'ai');
+                            } else {
+                                // Use fallback response if API fails
+                                const fallbackResponses = [
+                                    "I'm sorry, I couldn't generate a response. Try again later.",
+                                    "There was an issue connecting to the AI service. Please check your API settings."
+                                ];
+                                const fallbackResponse = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+                                addMessage(fallbackResponse, 'ai');
+                            }
+                            
+                            // Scroll to the bottom of the chat
+                            chatContainer.scrollTop = chatContainer.scrollHeight;
+                        });
+                    } else {
+                        // Original processing sequence for when no API key is set
+                        const processResponse = async () => {
+                            // Step 1: Search (if search mode is active)
+                            if (searchMode) {
+                                searchingContainer.classList.add('active');
+                                chatContainer.appendChild(searchingContainer);
+                                await new Promise(resolve => setTimeout(resolve, 2000));
+                                searchingContainer.classList.remove('active');
+                            }
+                            
+                            // Step 2: Thinking (if thinking mode is active)
+                            if (thinkingMode) {
+                                thinkingContainer.classList.add('active');
+                                chatContainer.appendChild(thinkingContainer);
+                                thinkingLogo.classList.add('rotate-animation');
+                                thinkingSteps.innerHTML = '';
+                                
+                                const steps = [
+                                    "Analyzing your request...",
+                                    "Searching knowledge base...",
+                                    "Processing relevant information...",
+                                    "Formulating response...",
+                                    "Optimizing answer for clarity..."
+                                ];
+                                
+                                for (let i = 0; i < steps.length; i++) {
+                                    await new Promise(resolve => setTimeout(resolve, 800));
+                                    const stepEl = document.createElement('div');
+                                    stepEl.classList.add('thinking-step');
+                                    stepEl.textContent = steps[i];
+                                    thinkingSteps.appendChild(stepEl);
+                                }
+                                
+                                await new Promise(resolve => setTimeout(resolve, 1000));
+                                thinkingLogo.classList.remove('rotate-animation');
+                                thinkingSteps.classList.add('expanded');
+                            }
+                            
+                            // Step 3: Show AI response
+                            const responses = [
+                                "I'm Palama AI, your personal assistant. How can I help you today?",
+                                "That's an interesting question! Let me think about it...",
+                                "I understand what you're asking. Here's what I found:",
+                                "I've analyzed your request and have some information for you.",
+                                "Thanks for your message! I'm processing your request now."
+                            ];
+                            
+                            const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                            console.log('AI response:', randomResponse);
+                            
+                            addMessage(randomResponse, 'ai');
+                            chatContainer.scrollTop = chatContainer.scrollHeight;
+                        };
+                        
+                        processResponse();
+                    }
+                    
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                } else {
+                    console.log('Empty message, not sending');
+                }
+            }
+            
+            // Handle Enter key in the search input
+            searchInput.addEventListener('keydown', function(e) {
+                console.log('Key pressed:', e.key);
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    console.log('Enter key pressed');
+                    
+                    // Check if this is the first message
+                    if (!chatContainer.classList.contains('active')) {
+                        // First message - setup UI
+                        chatContainer.classList.add('active');
+                        mainTitle.style.display = 'none';
+                        
+                        // Move search container to bottom and hide action buttons
+                        document.querySelector('.actions').classList.add('hidden');
+                        searchContainer.classList.add('input-active-mode');
+                        
+                        // Move bottom buttons inside the search container when in active mode
+                        const bottomButtons = document.querySelector('.bottom-buttons');
+                        if (!searchContainer.contains(bottomButtons)) {
+                            searchContainer.appendChild(bottomButtons);
+                        }
+                    }
+                    
+                    // Send the message
+                    sendMessage();
+                }
+            });
+            
+            // Handle mic button click
+            micButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('Mic button clicked');
+                startRecording();
+            });
+            
+            // Function to add a message to the chat
+            function addMessage(text, sender) {
+                // Create message element
+                const messageEl = document.createElement('div');
+                messageEl.classList.add('message', sender);
+                
+                // Function to parse markdown formatting
+                function parseMarkdown(text) {
+                    // Replace bold: **text** to <span class="bold">text</span>
+                    text = text.replace(/\*\*(.*?)\*\*/g, '<span class="bold">$1</span>');
+                    
+                    // Replace italic: *text* to <span class="italic">text</span>
+                    // Avoid replacing italics within bold text that was already replaced
+                    text = text.replace(/\*([^<>]*?)\*/g, '<span class="italic">$1</span>');
+                    
+                    // Replace inline code: `text` to <span class="code">text</span>
+                    text = text.replace(/`([^`]*?)`/g, '<span class="code">$1</span>');
+                    
+                    return text;
+                }
+                
+                if (sender === 'user') {
+                    // For user messages, apply markdown formatting
+                    messageEl.innerHTML = parseMarkdown(text);
+                } else {
+                    // Create AI message with logo and typing effect
+                    const logoEl = document.createElement('img');
+                    logoEl.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48cGF0aCBmaWxsPSIjMDk5ZWZmIiBkPSJNMTIwLDIwYzU1LjIsMCwxMDAsNDQuOCwxMDAsMTAwcy00NC44LDEwMC0xMDAsMTAwUzIwLDE3NS4yLDIwLDEyMFM2NC44LDIwLDEyMCwyMFptMCwxNzJjMzkuOCwwLDcyLTMyLjIsNzItNzJzLTMyLjItNzItNzItNzJzLTcyLDMyLjItNzIsNzJTODAuMiwxOTIsMTIwLDE5MloiLz48cGF0aCBmaWxsPSIjMDk5ZWZmIiBkPSJNMTgwLDEyMGMwLDMzLjEtMjYuOSw2MC06MCw2MHMtNjAtMjYuOS02MC02MGgyNGMwLDE5LjksMTYuMSwzNiwzNiwzNnMzNi0xNi4xLDM2LTM2SDE4MFoiLz48cGF0aCBmaWxsPSIjMDk5ZWZmIiBkPSJNMTIwLDE1NmMtMTkuOSwwLTM2LTE2LjEtMzYtMzZoNzJjMCwxOS45LTE2LjEsMzYtMzYsMzZaIi8+PC9zdmc+';
+                    logoEl.alt = 'Palama AI';
+                    logoEl.classList.add('ai-logo');
+                    
+                    const typingContainer = document.createElement('div');
+                    typingContainer.classList.add('typing-effect');
+                    
+                    messageEl.appendChild(logoEl);
+                    messageEl.appendChild(typingContainer);
+                    
+                    // Add message to DOM first
+                    chatContainer.appendChild(messageEl);
+                    
+                    // Show stop generation button
+                    document.getElementById('stopGenerationBtn').classList.add('active');
+                    
+                    // Simulate typing effect
+                    let processedText = '';
+                    let i = 0;
+                    const speed = 30; // typing speed
+                    let isGenerating = true;
+                    
+                    function typeWriter() {
+                        if (i < text.length && isGenerating) {
+                            processedText += text.charAt(i);
+                            
+                            // Apply markdown formatting to the accumulated text
+                            typingContainer.innerHTML = parseMarkdown(processedText);
+                            
+                            i++;
+                            setTimeout(typeWriter, speed);
+                        } else {
+                            // Hide stop generation button
+                            document.getElementById('stopGenerationBtn').classList.remove('active');
+                            
+                            // If generation was stopped early, add an indication
+                            if (!isGenerating && i < text.length) {
+                                typingContainer.innerHTML += '<span style="color:var(--text-secondary)"> [generation stopped]</span>';
+                            }
+                            
+                            // Save chat to history after message is fully displayed
+                            saveCurrentChatToHistory();
+                        }
+                    }
+                    
+                    // Set up the stop generation button functionality
+                    const stopGenerationBtn = document.getElementById('stopGenerationBtn');
+                    stopGenerationBtn.onclick = function() {
+                        isGenerating = false;
+                        stopGenerationBtn.classList.remove('active');
+                    };
+                    
+                    typeWriter();
+                    
+                    // Scroll to the latest message
+                    messageEl.scrollIntoView({ behavior: 'smooth' });
+                    return;
+                }
+                
+                // Add message to DOM
+                chatContainer.appendChild(messageEl);
+                
+                // Scroll to the latest message
+                messageEl.scrollIntoView({ behavior: 'smooth' });
+                
+                // Save chat to history after user sends a message
+                if (sender === 'user') {
+                    saveCurrentChatToHistory();
+                }
+            }
+            
+            // Function to show thinking UI
+            function showThinking() {
+                const thinkingContainer = document.getElementById('thinkingContainer');
+                if (thinkingContainer) {
+                    thinkingContainer.classList.add('visible');
+                    
+                    // Show stop generation button when thinking starts
+                    document.getElementById('stopGenerationBtn').classList.add('active');
+                }
+            }
+            
+            // Function to hide thinking UI
+            function hideThinking() {
+                const thinkingContainer = document.getElementById('thinkingContainer');
+                if (thinkingContainer) {
+                    thinkingContainer.classList.remove('visible');
+                    
+                    // Hide stop generation button when thinking ends
+                    document.getElementById('stopGenerationBtn').classList.remove('active');
+                }
+            }
+            
+            // Handle new chat button click
+            const newChatButton = document.getElementById('newChatButton');
+            newChatButton.addEventListener('click', function() {
+                console.log('New chat button clicked');
+                startNewChat();
+            });
+            
+            // Function to start a new chat
+            function startNewChat() {
+                // Clear the chat container
+                chatContainer.innerHTML = '';
+                
+                // Reset UI to initial state
+                if (chatContainer.classList.contains('active')) {
+                    // Reset chat container
+                    chatContainer.classList.remove('active');
+                    
+                    // Show main title
+                    mainTitle.style.display = 'block';
+                    
+                    // Show action buttons
+                    document.querySelector('.actions').classList.remove('hidden');
+                    
+                    // Reposition search container
+                    searchContainer.classList.remove('input-active-mode');
+                    
+                    // Move bottom buttons back to original position if needed
+                    const bottomButtons = document.querySelector('.bottom-buttons');
+                    if (searchContainer.contains(bottomButtons)) {
+                        document.body.appendChild(bottomButtons);
+                    }
+                }
+                
+                // Clear input field
+                searchInput.value = '';
+                
+                // Hide thinking UI if visible
+                hideThinking();
+                
+                // Show notification
+                showNotification('New chat started');
+            }
+        });
+        
+        // Settings DOM elements
+        const settingsModal = document.getElementById('settingsModal');
+        const settingsButtonContainer = document.getElementById('settingsButtonContainer');
+        const closeSettingsButton = document.getElementById('closeSettingsButton');
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        const modelEndpointInput = document.getElementById('modelEndpointInput');
+        const toggleApiKeyVisibility = document.getElementById('toggleApiKeyVisibility');
+        const saveApiSettings = document.getElementById('saveApiSettings');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+
+        // Toggle settings modal visibility
+        function toggleSettingsModal() {
+            settingsModal.classList.toggle('visible');
+            
+            // Load saved settings if opening
+            if (settingsModal.classList.contains('visible')) {
+                // Load API key from local storage
+                const savedApiKey = localStorage.getItem('apiKey');
+                if (savedApiKey) {
+                    apiKeyInput.value = savedApiKey;
+                }
+                
+                // Load endpoint if saved
+                const savedEndpoint = localStorage.getItem('modelEndpoint');
+                if (savedEndpoint) {
+                    modelEndpointInput.value = savedEndpoint;
+                }
+            }
+        }
+        
+        // Settings button event listener
+        settingsButtonContainer.addEventListener('click', toggleSettingsModal);
+        
+        // Settings event listeners
+        closeSettingsButton.addEventListener('click', toggleSettingsModal);
+        
+        // Toggle API key visibility
+        toggleApiKeyVisibility.addEventListener('click', function() {
+            if (apiKeyInput.type === 'password') {
+                apiKeyInput.type = 'text';
+                toggleApiKeyVisibility.innerHTML = '<i class="fas fa-eye-slash"></i>';
+            } else {
+                apiKeyInput.type = 'password';
+                toggleApiKeyVisibility.innerHTML = '<i class="fas fa-eye"></i>';
+            }
+        });
+        
+        // Additional info for Google AI Studio
+        const apiInfoText = document.createElement('div');
+        apiInfoText.classList.add('api-info');
+        apiInfoText.innerHTML = `
+            <p><strong>Google AI Studio API Information:</strong></p>
+            <p>This app is configured to work with Google AI Studio (Gemini API). Make sure to:</p>
+            <ol>
+                <li>Get your API key from <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console</a></li>
+                <li>Enter the API key in the field above</li>
+                <li>The default endpoint is set for Google AI Studio: <code>https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent</code></li>
+            </ol>
+        `;
+        
+        // Insert after API key input section
+        const apiKeySection = document.querySelector('.form-group');
+        if (apiKeySection) {
+            apiKeySection.parentNode.insertBefore(apiInfoText, apiKeySection.nextSibling);
+        }
+        
+        // Save API settings
+        saveApiSettings.addEventListener('click', function() {
+            const apiKey = apiKeyInput.value.trim();
+            const modelEndpoint = modelEndpointInput.value.trim();
+            
+            // Save API key to localStorage
+            if (apiKey) {
+                localStorage.setItem('apiKey', apiKey);
+                
+                // Save endpoint if provided, otherwise use default Google AI Studio endpoint
+                if (modelEndpoint) {
+                    localStorage.setItem('modelEndpoint', modelEndpoint);
+                } else {
+                    localStorage.removeItem('modelEndpoint');  // Use default
+                }
+                
+                showNotification('API settings saved successfully!');
+                toggleSettingsModal(); // Close the modal after saving
+            } else {
+                showNotification('Please enter a valid API key', 'error');
+            }
+        });
+        
+        // Save All Settings button event listener
+        const saveAllSettings = document.getElementById('saveAllSettings');
+        if (saveAllSettings) {
+            console.log('Found Save All Settings button');
+            saveAllSettings.onclick = function() {
+                console.log('Save All Settings clicked');
+                // Save API settings
+                const apiKey = apiKeyInput.value.trim();
+                const modelEndpoint = modelEndpointInput.value.trim();
+                
+                // Check if API key is valid before saving
+                if (apiKey) {
+                    localStorage.setItem('apiKey', apiKey);
+                    
+                    if (modelEndpoint) {
+                        localStorage.setItem('modelEndpoint', modelEndpoint);
+                    } else {
+                        localStorage.removeItem('modelEndpoint');
+                    }
+                    
+                    // Save dark mode setting
+                    localStorage.setItem('darkMode', darkModeToggle.checked);
+                    
+                    // Show success notification
+                    showNotification('All settings saved successfully!');
+                    
+                    // Close the settings modal
+                    toggleSettingsModal();
+                } else {
+                    // Show error if API key is missing
+                    showNotification('Please enter a valid API key', 'error');
+                }
+            };
+        } else {
+            console.error('Save All Settings button not found');
+        }
+        
+        // Close settings when clicking outside
+        settingsModal.addEventListener('click', function(e) {
+            if (e.target === settingsModal) {
+                toggleSettingsModal();
+            }
+        });
+    </script>
+    
+    <!-- Additional script for settings functionality -->
+    <script>
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing settings functionality');
+            
+            // Get the save all settings button
+            const saveAllSettingsBtn = document.getElementById('saveAllSettings');
+            
+            if (saveAllSettingsBtn) {
+                console.log('Save All Settings button found');
+                
+                // Add click event listener
+                saveAllSettingsBtn.addEventListener('click', function() {
+                    console.log('Save All Settings button clicked');
+                    
+                    // Get settings elements
+                    const apiKeyInput = document.getElementById('apiKeyInput');
+                    const modelEndpointInput = document.getElementById('modelEndpointInput');
+                    const darkModeToggle = document.getElementById('darkModeToggle');
+                    
+                    if (apiKeyInput && modelEndpointInput && darkModeToggle) {
+                        // Get values
+                        const apiKey = apiKeyInput.value.trim();
+                        const modelEndpoint = modelEndpointInput.value.trim();
+                        
+                        // Validate and save
+                        if (apiKey) {
+                            // Save API key
+                            localStorage.setItem('apiKey', apiKey);
+                            
+                            // Save endpoint if provided
+                            if (modelEndpoint) {
+                                localStorage.setItem('modelEndpoint', modelEndpoint);
+                            } else {
+                                localStorage.removeItem('modelEndpoint');
+                            }
+                            
+                            // Save dark mode setting
+                            localStorage.setItem('darkMode', darkModeToggle.checked);
+                            
+                            // Show success notification
+                            if (window.showNotification) {
+                                showNotification('All settings saved successfully!');
+                            } else {
+                                alert('All settings saved successfully!');
+                            }
+                            
+                            // Close settings modal
+                            const settingsModal = document.getElementById('settingsModal');
+                            if (settingsModal) {
+                                settingsModal.classList.remove('visible');
+                            }
+                        } else {
+                            // Show error for missing API key
+                            if (window.showNotification) {
+                                showNotification('Please enter a valid API key', 'error');
+                            } else {
+                                alert('Please enter a valid API key');
+                            }
+                        }
+                    } else {
+                        console.error('Could not find all required settings elements');
+                    }
+                });
+            } else {
+                console.error('Save All Settings button not found in DOM');
+            }
+        });
+    </script>
+</body>
+</html>
